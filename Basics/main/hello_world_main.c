@@ -16,6 +16,8 @@
 #include "esp_system.h"
 #include "driver/gpio.h"
 
+#include "hello_world_main.h"
+
 #define LED_G GPIO_NUM_33
 #define LED_B GPIO_NUM_26
 #define LED_R GPIO_NUM_25
@@ -64,6 +66,7 @@ void reset_chip(){
     esp_restart();
 }
 
+/* String print function */
 void print_funct(char* input_string){
     // for (int i = 0; i < strlen(input_string); i++){
     //     printf("%p = %c\n", &input_string[i], input_string[i]);
@@ -71,6 +74,7 @@ void print_funct(char* input_string){
     printf("%s", input_string);
 }
 
+/* Memory allocation function that returns a pointer */
 char* allocate_mem(char *input_string){
     int length = 0;
     
@@ -91,17 +95,16 @@ char* allocate_mem(char *input_string){
     return (ptr);
 }
 
-bool set_bit_check(uint16_t bit, int check){
-    return (bit & (1 << (check - 1))) != 0;
-}
 
+
+/* ESP struct instantiation for GPIO */
 gpio_config_t myGPIO;
 
 void app_main(void)
 {
     /***** String Function *****/
     // Local declarations
-    /* char user_string[256] = "Hello world";
+    /*char user_string[256] = "Hello world";
     int length = 0;
     
     // Input
@@ -128,28 +131,28 @@ void app_main(void)
     */
 
     /**** Bit Masking LED Example ****/
-    // myGPIO.pin_bit_mask = (LED_G_BIT_MASK | LED_B_BIT_MASK | LED_R_BIT_MASK);
-    // myGPIO.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    // myGPIO.pull_up_en = GPIO_PULLUP_DISABLE;
-    // myGPIO.intr_type = GPIO_INTR_DISABLE;
-    // myGPIO.mode = GPIO_MODE_OUTPUT;
+    /*myGPIO.pin_bit_mask = (LED_G_BIT_MASK | LED_B_BIT_MASK | LED_R_BIT_MASK);
+    myGPIO.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    myGPIO.pull_up_en = GPIO_PULLUP_DISABLE;
+    myGPIO.intr_type = GPIO_INTR_DISABLE;
+    myGPIO.mode = GPIO_MODE_OUTPUT;
 
-    // gpio_config(&myGPIO);
+    gpio_config(&myGPIO);
 
-    // while (1){
-    //     gpio_set_level(LED_G, true);
-    //     vTaskDelay(100);
-    //     gpio_set_level(LED_G, false);
+    while (1){
+        gpio_set_level(LED_G, true);
+        vTaskDelay(100);
+        gpio_set_level(LED_G, false);
 
-    //     gpio_set_level(LED_B, true);
-    //     vTaskDelay(100);
-    //     gpio_set_level(LED_B, false);
+        gpio_set_level(LED_B, true);
+        vTaskDelay(100);
+        gpio_set_level(LED_B, false);
 
-    //     gpio_set_level(LED_R, true);
-    //     vTaskDelay(100);
-    //     gpio_set_level(LED_R, false);
-    //     vTaskDelay(100);
-    // }
+        gpio_set_level(LED_R, true);
+        vTaskDelay(100);
+        gpio_set_level(LED_R, false);
+        vTaskDelay(100);
+    }*/
 
     /**** Bitwise Operations ****/
     // Example 1: Input is 0b1001 0010 0011  (0x923), j = ith bit, make 0010 0000
@@ -170,5 +173,6 @@ void app_main(void)
     else {
         printf("For %X, bit %d is not set.\n", input_bit,  check_bit);
     }
+    
 }
  
