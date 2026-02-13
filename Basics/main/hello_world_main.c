@@ -15,6 +15,7 @@
 #include "esp_flash.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
+#include "driver/ledc.h"
 
 #include "hello_world_main.h"
 
@@ -22,9 +23,17 @@
 #define LED_B GPIO_NUM_26
 #define LED_R GPIO_NUM_25
 
-#define LED_G_BIT_MASK (1ULL << LED_G)      // ULL = Unsigned Long Long
+#define LED_G_BIT_MASK (1ULL << LED_G)       // ULL = Unsigned Long Long
 #define LED_B_BIT_MASK (1ULL << LED_B)
 #define LED_R_BIT_MASK (1ULL << LED_R)
+
+#define LEDC_TIMER      LEDC_TIMER_0
+#define LEDC_MODE       LEDC_LOW_SPEED_MODE
+#define LEDC_CHANNEL    LEDC_CHANNEL_0
+#define LEDC_DUTY_RES   LEDC_TIMER_13_BIT   // Set duty resolution to 13-bits
+#define LEDC_DUTY       (4000)              // Set duty to 50% (2 ** 13) * 50% = 4096
+#define LEDC_FREQUENCY  (4000)              // Frequency in Hz
+#define LEDC_FADE_TIME  (3000)
 
 void chip_data(void){
     /* Print chip information */
@@ -66,6 +75,29 @@ void reset_chip(){
     esp_restart();
 }
 
+static void led_init(){
+    ledc_timer_config_t ledc_timer = {
+        .speed_mode      = LEDC_MODE,
+        .duty_resolution = LEDC_TIMER_13_BIT,
+        .timer_num       = LEDC_TIMER,
+        .freq_hz         = LEDC_FREQUENCY,
+        .clk_cfg         = LEDC_AUTO_CLK
+    };
+    ESP_ERROR_CHECK(ledc_timer_config(&ledc_timer));
+
+    ledc_channel_config_t ledc_channel  = {
+        .speed_mode      = LEDC_MODE,
+        .channel         = LEDC_CHANNEL,
+        .timer_sel       = LEDC_TIMER,
+        .intr_type       = LEDC_INTR_DISABLE,
+        .gpio_num        = LED_G,
+        .duty            = 0,
+        .hpoint          = 0
+    };
+    ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel));
+}
+
+
 /* String print function */
 void print_funct(char* input_string){
     // for (int i = 0; i < strlen(input_string); i++){
@@ -94,7 +126,6 @@ char* allocate_mem(char *input_string){
     }
     return (ptr);
 }
-
 
 
 /* ESP struct instantiation for GPIO */
@@ -156,15 +187,15 @@ void app_main(void)
 
     /**** Bitwise Operations ****/
     // Example 1: Input is 0b1001 0010 0011  (0x923), j = ith bit, make 0010 0000
-    uint16_t input_bit = 0b100100100011;
+    /*int input_bit = 2339;
     int j = 6; // Hard-coded six bit
 
-    uint16_t output_bit = input_bit & ~(0x1 << (j-1));
+    int output_bit = turnOffBit(input_bit, j);
     printf("%X\n", output_bit);
     // Result is 0x903, as expected
 
     // Example 2: Input is 0b1101 0110, each bit determines an option, make function to print what options are enabled
-    input_bit =  0b11010100;
+    input_bit =  212;
     int check_bit = 2;
     int set = set_bit_check(input_bit, check_bit);
     if (set){
@@ -173,6 +204,40 @@ void app_main(void)
     else {
         printf("For %X, bit %d is not set.\n", input_bit,  check_bit);
     }
+
+    // Example 3: Input  is -100 (0b1001 1100), perform twos complement to get 100 (0b0110 0100)
+    // 2sc: 0b1001 1100
+    int number = -100;
+    int twosComp = twosComplement(number);
+    printf("Original: %d, 0x%X\n"
+        "Twos Complement: %d, 0x%X\n", number, number, twosComp, twosComp);
+    */
+
+    /* PWM LED */
+
+    led_init();
+    ledc_fade_func_install(0);
+    while(1){
+        // printf("Duty = %d\n\n", LEDC_DUTY);
+        // ledc_set_fade_with_time(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY, LEDC_FADE_TIME);
+        // ledc_fade_start(LEDC_MODE, LEDC_CHANNEL, LEDC_FADE_NO_WAIT);
+
+        // printf("Duty down to 0\n\n");
+        // ledc_set_fade_with_time(LEDC_MODE, LEDC_CHANNEL, 0, LEDC_FADE_TIME);
+        // ledc_fade_start(LEDC_MODE, LEDC_CHANNEL, LEDC_FADE_NO_WAIT);
+
+        printf("LEDC Set duty = %d\n\n", LEDC_DUTY);
+        ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, LEDC_DUTY);
+        ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        printf("Duty = 0\n");
+        ledc_set_duty(LEDC_MODE, LEDC_CHANNEL, 0);
+        ledc_update_duty(LEDC_MODE, LEDC_CHANNEL);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+
+    printf("Terminating program.\n");
     
 }
  
